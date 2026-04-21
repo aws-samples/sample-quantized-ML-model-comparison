@@ -1,0 +1,51 @@
+Third-Party Licenses
+====================
+
+This project includes or depends on the following third-party components:
+
+
+1. llama.cpp
+   - Source: https://github.com/ggml-org/llama.cpp
+   - License: MIT
+   - Usage: Pre-built Docker image (ghcr.io/ggml-org/llama.cpp:server-cuda) used
+     as the base container for serving the quantized GGUF model.
+
+2. Qwen3-VL-8B-Instruct (Full-Precision Model)
+   - Source: https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct
+   - License: Apache-2.0
+   - Usage: Downloaded at runtime by the SageMaker LMI container for
+     full-precision BF16 inference.
+
+3. Unsloth Qwen3-VL-8B-Instruct-GGUF (Quantized Model)
+   - Source: https://huggingface.co/unsloth/Qwen3-VL-8B-Instruct-GGUF
+   - License: Apache-2.0
+   - Usage: Q4_K_M GGUF and mmproj-F16 vision projector files downloaded at
+     Docker build time for quantized inference via llama.cpp.
+
+4. nginx
+   - Source: https://nginx.org/
+   - License: BSD-2-Clause
+   - Usage: Used as a reverse proxy inside the BYOC container to translate
+     SageMaker's /ping and /invocations contract to llama.cpp's API.
+
+5. Test Images (Unsplash)
+   - Source: https://unsplash.com
+   - License: Unsplash License (https://unsplash.com/license)
+     Free to use for commercial and non-commercial purposes. No permission
+     needed. Attribution not required but appreciated.
+   - Usage: Test images downloaded at notebook runtime for image comparison tasks.
+
+
+Python Dependencies
+-------------------
+
+The following Python packages are used by the notebook and utility module.
+All are permissively licensed and compatible with MIT-0:
+
+- boto3 (Apache-2.0) - AWS SDK for Python
+- sagemaker (Apache-2.0) - Amazon SageMaker Python SDK
+- matplotlib (PSF-based, BSD-compatible) - Plotting library
+- pandas (BSD-3-Clause) - Data manipulation library
+- Pillow (HPND, MIT-like) - Image processing library
+- requests (Apache-2.0) - HTTP library
+- huggingface-hub (Apache-2.0) - HuggingFace model download CLI (used in Dockerfile)

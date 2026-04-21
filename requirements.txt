@@ -1,0 +1,8 @@
+boto3
+sagemaker
+matplotlib
+pandas
+Pillow
+requests
+hypothesis
+pytest
