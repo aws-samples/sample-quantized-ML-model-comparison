@@ -23,3 +23,8 @@ terraform/.build-context.zip
 
 # OS
 .DS_Store
+
+# SSH keys (never commit)
+gitkey
+gitkey.pub
+*.pem
