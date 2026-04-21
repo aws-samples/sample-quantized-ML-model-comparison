@@ -28,3 +28,6 @@ terraform/.build-context.zip
 gitkey
 gitkey.pub
 *.pem
+
+# Security scan justifications (internal review document)
+security-scan-justifications.txt

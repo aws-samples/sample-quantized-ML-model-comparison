@@ -45,7 +45,7 @@ resource "aws_ecr_repository" "llamacpp" {
   }
 
   encryption_configuration {
-    encryption_type = "AES256"
+    encryption_type = "KMS"
   }
 
   tags = {
@@ -91,6 +91,21 @@ resource "aws_s3_bucket_versioning" "codebuild_source" {
 
   versioning_configuration {
     status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "codebuild_source" {
+  bucket = aws_s3_bucket.codebuild_source.id
+
+  rule {
+    id     = "expire-old-versions"
+    status = "Enabled"
+
+    filter {}
+
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
   }
 }
 

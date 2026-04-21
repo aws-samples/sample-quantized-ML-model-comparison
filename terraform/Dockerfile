@@ -49,15 +49,12 @@ RUN useradd -r -s /bin/false appuser \
 COPY serving_script/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# ── Health check ────────────────────────────────────────────────────────────
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD curl -f http://localhost:8080/ping || exit 1
-
-# ── Expose SageMaker contract port ──────────────────────────────────────────
 EXPOSE 8080
 
-# Run as non-root user — nginx is started via entrypoint which handles
-# the port binding before dropping to serve requests
+# ── Switch to non-root user ─────────────────────────────────────────────────
 USER appuser
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD ["curl", "-f", "http://localhost:8080/ping"]
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
