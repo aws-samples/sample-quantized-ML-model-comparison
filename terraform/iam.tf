@@ -21,16 +21,15 @@ resource "aws_iam_role" "sagemaker_execution_role" {
   }
 }
 
-# Attach AmazonSageMakerFullAccess managed policy for SageMaker hosting permissions
-# NOTE: This broad policy is used for simplicity in this demo. For production
-# deployments, create a custom policy with only the specific permissions needed
-# for model hosting (e.g., sagemaker:InvokeEndpoint, sagemaker:CreateModel, etc.)
+# NOTE: This broad managed policy is used for simplicity in this sample.
+# For production deployments, create a custom policy with only the specific
+# permissions needed for model hosting.
 resource "aws_iam_role_policy_attachment" "sagemaker_full_access" {
   role       = aws_iam_role.sagemaker_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
 }
 
-# Custom inline policy for ECR pull access, S3 model artifacts, and CloudWatch Logs
+# Custom inline policy for ECR pull access and CloudWatch Logs
 resource "aws_iam_role_policy" "sagemaker_custom_permissions" {
   name = "sagemaker-qwen3-vl-custom-permissions"
   role = aws_iam_role.sagemaker_execution_role.id
@@ -39,24 +38,23 @@ resource "aws_iam_role_policy" "sagemaker_custom_permissions" {
     Version = "2012-10-17"
     Statement = [
       {
+        Sid    = "ECRAuth"
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken"
+        ]
+        # ecr:GetAuthorizationToken does not support resource-level permissions
+        Resource = "*"
+      },
+      {
         Sid    = "ECRPullAccess"
         Effect = "Allow"
         Action = [
           "ecr:GetDownloadUrlForLayer",
           "ecr:BatchGetImage",
-          "ecr:GetAuthorizationToken",
           "ecr:BatchCheckLayerAvailability"
         ]
-        Resource = "*"
-      },
-      {
-        Sid    = "S3ModelArtifactAccess"
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:ListBucket"
-        ]
-        Resource = "*"
+        Resource = "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/${local.ecr_repo_name}"
       },
       {
         Sid    = "CloudWatchLogging"
@@ -67,7 +65,7 @@ resource "aws_iam_role_policy" "sagemaker_custom_permissions" {
           "logs:PutLogEvents",
           "logs:DescribeLogStreams"
         ]
-        Resource = "arn:aws:logs:*:*:*"
+        Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/sagemaker/*"
       }
     ]
   })

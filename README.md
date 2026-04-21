@@ -1,6 +1,6 @@
 # Quantized Model Comparison for Amazon SageMaker with Qwen3-VL
 
-> **⚠️ Important:** This project is provided as sample code for demonstration and educational purposes only. It is **not intended for production use**. The code has not undergone a formal AWS security review. If you plan to build on this sample for production workloads, you are responsible for conducting your own security review, testing, and validation.
+> **⚠️ Important:** This project is provided as sample code for demonstration and educational purposes only. It is **not intended for production use**.
 
 Side-by-side comparison of [Unsloth's](https://unsloth.ai) dynamically quantized Qwen3-VL-8B-Instruct (4-bit GGUF via llama.cpp) against the full-precision BF16 variant (via vLLM on SageMaker LMI), deployed on Amazon SageMaker real-time endpoints.
 

@@ -233,6 +233,7 @@ def encode_image(image_path_or_url: str) -> str:
         response = requests.get(
             image_path_or_url,
             headers={"User-Agent": "QwenVL-Comparison-Notebook/1.0"},
+            timeout=30,
         )
         response.raise_for_status()
         return base64.b64encode(response.content).decode("utf-8")

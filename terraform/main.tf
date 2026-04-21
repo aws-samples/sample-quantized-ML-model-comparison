@@ -37,11 +37,15 @@ locals {
 
 resource "aws_ecr_repository" "llamacpp" {
   name                 = local.ecr_repo_name
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE"
   force_delete         = true
 
   image_scanning_configuration {
-    scan_on_push = false
+    scan_on_push = true
+  }
+
+  encryption_configuration {
+    encryption_type = "AES256"
   }
 
   tags = {
@@ -59,6 +63,34 @@ resource "aws_s3_bucket" "codebuild_source" {
 
   tags = {
     Project = "qwen3-vl-quantized-comparison"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "codebuild_source" {
+  bucket = aws_s3_bucket.codebuild_source.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "codebuild_source" {
+  bucket = aws_s3_bucket.codebuild_source.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "aws:kms"
+    }
+    bucket_key_enabled = true
+  }
+}
+
+resource "aws_s3_bucket_versioning" "codebuild_source" {
+  bucket = aws_s3_bucket.codebuild_source.id
+
+  versioning_configuration {
+    status = "Enabled"
   }
 }
 
@@ -127,14 +159,14 @@ resource "aws_iam_role_policy" "codebuild_permissions" {
           "ecr:GetAuthorizationToken"
         ]
         Resource = "*"
+        # Note: ecr:GetAuthorizationToken does not support resource-level permissions
+        # and requires Resource = "*" per AWS documentation
       },
       {
         Sid    = "ECRPush"
         Effect = "Allow"
         Action = [
           "ecr:BatchCheckLayerAvailability",
-          "ecr:GetDownloadUrlForLayer",
-          "ecr:BatchGetImage",
           "ecr:PutImage",
           "ecr:InitiateLayerUpload",
           "ecr:UploadLayerPart",
@@ -159,7 +191,7 @@ resource "aws_iam_role_policy" "codebuild_permissions" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = "arn:aws:logs:*:*:*"
+        Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/codebuild/qwen3-vl-llamacpp-build:*"
       }
     ]
   })
@@ -175,12 +207,12 @@ resource "aws_codebuild_project" "docker_build" {
   service_role = aws_iam_role.codebuild_role.arn
 
   # Use a large compute type — the build downloads ~6.4 GB of model weights
-  # and compiles llama.cpp, so it needs substantial memory and disk
+  # and serves via Docker, so it needs substantial memory and disk
   environment {
     compute_type                = "BUILD_GENERAL1_LARGE"
     image                       = "aws/codebuild/standard:7.0"
     type                        = "LINUX_CONTAINER"
-    privileged_mode             = true
+    privileged_mode             = true  # Required for Docker-in-Docker builds
     image_pull_credentials_type = "CODEBUILD"
 
     environment_variable {

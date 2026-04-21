@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         nginx \
         curl \
         ca-certificates \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Install huggingface-hub for model download ─────────────────────────────
@@ -39,6 +40,10 @@ RUN hf download \
 # ── Copy entrypoint script ──────────────────────────────────────────────────
 COPY serving_script/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# ── Health check ────────────────────────────────────────────────────────────
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD curl -f http://localhost:8080/ping || exit 1
 
 # ── Expose SageMaker contract port ──────────────────────────────────────────
 EXPOSE 8080
