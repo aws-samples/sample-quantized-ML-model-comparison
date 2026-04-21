@@ -160,7 +160,8 @@ resource "aws_iam_role_policy" "codebuild_permissions" {
         ]
         Resource = "*"
         # Note: ecr:GetAuthorizationToken does not support resource-level permissions
-        # and requires Resource = "*" per AWS documentation
+        # and requires Resource = "*" per AWS documentation.
+        # This returns a temporary Docker login token, not IAM credentials.
       },
       {
         Sid    = "ECRPush"
@@ -202,9 +203,10 @@ resource "aws_iam_role_policy" "codebuild_permissions" {
 # ---------------------------------------------------------------------------
 
 resource "aws_codebuild_project" "docker_build" {
-  name         = "qwen3-vl-llamacpp-build"
-  description  = "Build and push the llama.cpp BYOC container for quantized model serving"
-  service_role = aws_iam_role.codebuild_role.arn
+  name           = "qwen3-vl-llamacpp-build"
+  description    = "Build and push the llama.cpp BYOC container for quantized model serving"
+  service_role   = aws_iam_role.codebuild_role.arn
+  encryption_key = "alias/aws/s3"
 
   # Use a large compute type — the build downloads ~6.4 GB of model weights
   # and serves via Docker, so it needs substantial memory and disk

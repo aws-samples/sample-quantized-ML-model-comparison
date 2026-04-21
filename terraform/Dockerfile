@@ -37,6 +37,14 @@ RUN hf download \
         --local-dir /models \
     && ls -lh /models/mmproj-F16.gguf
 
+# ── Create non-root user and prepare writable directories ────────────────────
+RUN useradd -r -s /bin/false appuser \
+    && chown -R appuser:appuser /models \
+    && mkdir -p /tmp/nginx \
+    && chown -R appuser:appuser /tmp/nginx \
+    && chown -R appuser:appuser /var/log/nginx \
+    && chown -R appuser:appuser /etc/nginx
+
 # ── Copy entrypoint script ──────────────────────────────────────────────────
 COPY serving_script/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
@@ -47,5 +55,9 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
 
 # ── Expose SageMaker contract port ──────────────────────────────────────────
 EXPOSE 8080
+
+# Run as non-root user — nginx is started via entrypoint which handles
+# the port binding before dropping to serve requests
+USER appuser
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

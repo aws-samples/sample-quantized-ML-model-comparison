@@ -45,15 +45,20 @@ echo "llama-server is ready."
 # ── Configure nginx as a reverse proxy ──────────────────────────────────────
 cat > /etc/nginx/nginx.conf <<EOF
 worker_processes auto;
-pid /run/nginx.pid;
-error_log /var/log/nginx/error.log warn;
+pid /tmp/nginx/nginx.pid;
+error_log /tmp/nginx/error.log warn;
 
 events {
     worker_connections 128;
 }
 
 http {
-    access_log /var/log/nginx/access.log;
+    access_log /tmp/nginx/access.log;
+    client_body_temp_path /tmp/nginx/client_body;
+    proxy_temp_path /tmp/nginx/proxy;
+    fastcgi_temp_path /tmp/nginx/fastcgi;
+    uwsgi_temp_path /tmp/nginx/uwsgi;
+    scgi_temp_path /tmp/nginx/scgi;
 
     upstream llama_backend {
         server 127.0.0.1:${LLAMA_PORT};
