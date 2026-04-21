@@ -1,93 +1,180 @@
-# sample-quantized-model-comparison-sagemaker
+# Quantized Model Comparison for Amazon SageMaker with Qwen3-VL
 
+> **⚠️ Important:** This project is provided as sample code for demonstration and educational purposes only. It is **not intended for production use**. The code has not undergone a formal AWS security review. If you plan to build on this sample for production workloads, you are responsible for conducting your own security review, testing, and validation.
 
+Side-by-side comparison of [Unsloth's](https://unsloth.ai) dynamically quantized Qwen3-VL-8B-Instruct (4-bit GGUF via llama.cpp) against the full-precision BF16 variant (via vLLM on SageMaker LMI), deployed on Amazon SageMaker real-time endpoints.
 
-## Getting started
+This project supplements the blog post: **Quantization and Deploying Models on AWS**.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## What This Does
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- Deploys two SageMaker endpoints via Terraform:
+  - **Quantized**: Unsloth Q4_K_M GGUF served by llama.cpp in a custom container (`ml.g5.xlarge`, ~$1.41/hr)
+  - **Full-Precision**: BF16 served by vLLM via SageMaker LMI (`ml.g5.12xlarge`, ~$7.09/hr)
+- Runs a Jupyter notebook that sends identical image prompts to both endpoints
+- Compares output quality, latency, throughput, and cost side by side
 
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Architecture
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.aws.dev/battglia/sample-quantized-model-comparison-sagemaker.git
-git branch -M main
-git push -uf origin main
+┌─────────────────────────────────────────────────┐
+│                  Terraform                       │
+│                                                  │
+│  ┌──────────────┐      ┌──────────────────────┐ │
+│  │ ECR + BYOC   │      │ SageMaker LMI (vLLM) │ │
+│  │ llama.cpp    │      │ BF16 full precision   │ │
+│  │ Q4_K_M GGUF  │      │ ml.g5.12xlarge        │ │
+│  │ ml.g5.xlarge │      │                       │ │
+│  └──────┬───────┘      └──────────┬────────────┘ │
+└─────────┼─────────────────────────┼──────────────┘
+          │                         │
+          ▼                         ▼
+┌─────────────────────────────────────────────────┐
+│           Jupyter Notebook                       │
+│  • Image description, OCR, visual QA            │
+│  • Side-by-side output comparison               │
+│  • Latency & throughput charts                  │
+│  • Cost analysis                                │
+└─────────────────────────────────────────────────┘
 ```
 
-## Integrate with your tools
+## Prerequisites
 
-- [ ] [Set up project integrations](https://gitlab.aws.dev/battglia/sample-quantized-model-comparison-sagemaker/-/settings/integrations)
+- AWS account with SageMaker access
+- [Terraform](https://www.terraform.io/downloads) >= 1.0
+- AWS CLI configured with credentials
+- SageMaker GPU quota in your target region:
+  - `ml.g5.xlarge` for endpoint usage (at least 1)
+  - `ml.g5.12xlarge` for endpoint usage (at least 1) — this often requires a [quota increase request](https://console.aws.amazon.com/servicequotas/)
+- A Jupyter environment to run the notebook (SageMaker Studio, local, etc.)
 
-## Collaborate with your team
+## Quick Start
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+### 1. Deploy Infrastructure
 
-## Test and Deploy
+```bash
+cd terraform
+terraform init
+terraform apply
+```
 
-Use the built-in continuous integration in GitLab.
+This creates:
+- An ECR repository and builds the llama.cpp BYOC container via AWS CodeBuild
+- IAM roles for SageMaker and CodeBuild
+- Two SageMaker real-time endpoints
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+The first deploy takes ~15-20 minutes (CodeBuild + endpoint startup).
 
-***
+### 2. Run the Notebook
 
-# Editing this README
+Open `comparison_notebook.ipynb` in your Jupyter environment. Make sure `comparison_utils.py` is in the same directory.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+If using SageMaker Studio, upload both files or copy them via S3.
 
-## Suggestions for a good README
+The notebook will:
+1. Download test images locally
+2. Send each image to both endpoints
+3. Display side-by-side model outputs
+4. Plot latency and throughput comparisons
+5. Show a cost comparison table
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### 3. Clean Up
 
-## Name
-Choose a self-explaining name for your project.
+To avoid ongoing charges (~$8.50/hr while both endpoints are running):
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+```bash
+cd terraform
+terraform destroy
+```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## Cost Estimate
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+| Endpoint | Instance | Hourly Cost |
+|----------|----------|-------------|
+| Quantized (Q4_K_M GGUF) | ml.g5.xlarge | ~$1.41/hr |
+| Full-Precision (BF16) | ml.g5.12xlarge | ~$7.09/hr |
+| **Total** | | **~$8.50/hr** |
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+## Configuration
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+Edit `terraform/variables.tf` to change defaults:
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `aws_region` | `us-east-2` | AWS region for all resources |
+| `quantized_instance_type` | `ml.g5.xlarge` | Instance for quantized endpoint |
+| `full_precision_instance_type` | `ml.g5.12xlarge` | Instance for full-precision endpoint |
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+## Project Structure
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```
+├── README.md                      # This file
+├── comparison_notebook.ipynb      # Main comparison notebook
+├── comparison_utils.py            # Shared data models and helper functions
+├── requirements.txt               # Python dependencies
+├── terraform/
+│   ├── main.tf                    # SageMaker endpoints, ECR, CodeBuild
+│   ├── variables.tf               # Configurable variables (region, instance types)
+│   ├── outputs.tf                 # Endpoint names
+│   ├── iam.tf                     # IAM roles for SageMaker and CodeBuild
+│   ├── Dockerfile                 # BYOC container for llama.cpp
+│   ├── serving_script/
+│   │   └── entrypoint.sh          # Container entrypoint (llama-server + nginx)
+│   └── README.md                  # Terraform-specific instructions
+└── LICENSE
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+---
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+## Background
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### What Is Quantization?
+
+Large language models store their parameters as high-precision floating-point numbers (typically BF16 or FP16, using 16 bits per parameter). An 8-billion parameter model at BF16 precision requires ~16 GB of storage and GPU memory. Quantization reduces this by representing parameters with fewer bits — for example, 4-bit quantization shrinks the same model to ~5 GB.
+
+The trade-off is straightforward: smaller models are cheaper and faster to serve, but aggressive compression can degrade output quality. The challenge is finding the right balance.
+
+### Unsloth Dynamic 2.0 Quantization
+
+[Unsloth Dynamic 2.0](https://unsloth.ai/blog/dynamic-4bit) takes a different approach from standard quantization methods. Instead of applying the same bit-width uniformly across all layers, it **selectively quantizes each layer based on its sensitivity to compression**.
+
+How it works:
+
+- **Layer-by-layer analysis**: Unsloth profiles each layer's sensitivity to quantization by measuring activation errors and weight quantization errors. Some layers (particularly early layers and vision projection layers in multimodal models) are much more sensitive than others.
+- **Dynamic bit allocation**: Sensitive layers are kept at higher precision (e.g., 16-bit), while less sensitive layers are compressed more aggressively (e.g., 4-bit). The specific combination differs for every model.
+- **Custom calibration**: Each model uses a curated calibration dataset of >1.5M tokens to determine the optimal quantization scheme, rather than relying on generic approaches.
+
+The result is a model that's nearly as accurate as the full-precision original, but at a fraction of the size. For example, Unsloth's Dynamic 4-bit quantization of Qwen2-VL-2B correctly describes an image as "a train traveling on tracks," while standard 4-bit quantization of the same model hallucinates "a vibrant and colorful scene of a coastal area."
+
+### GGUF Format
+
+The quantized models in this project use the [GGUF format](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md) (GPT-Generated Unified Format), the standard file format for llama.cpp inference. GGUF files are self-contained — they include the model weights, tokenizer configuration, and metadata in a single file. This makes them easy to deploy: download one file, point llama.cpp at it, and start serving.
+
+### What Is Q4_K_M?
+
+The `Q4_K_M` in the GGUF filename refers to the specific quantization scheme:
+- **Q4** — 4-bit quantization (each weight stored in 4 bits instead of 16)
+- **K** — uses k-quant method, which groups weights into blocks and stores per-block scaling factors for better accuracy
+- **M** — medium size variant (balances quality vs compression; S = small/more compressed, L = large/less compressed)
+
+Q4_K_M is widely considered the sweet spot for 4-bit quantization — it preserves most of the model's quality while achieving ~3x compression over BF16.
+
+### Artifact → Runtime → AWS Service
+
+A key idea from the companion blog: **the output artifact should drive the serving design**.
+
+The quantized model is exported as a GGUF file, which maps naturally to **llama.cpp** as the runtime. llama.cpp is lightweight, runs on a single GPU, and serves GGUF files directly via an OpenAI-compatible API. On AWS, that maps to a custom container (BYOC) on a small SageMaker endpoint.
+
+The full-precision model stays in safetensor format (BF16), which maps naturally to **vLLM** — a production GPU serving engine built for throughput and batching. On AWS, that maps to the SageMaker Large Model Inference (LMI) container.
+
+This is the pattern: choose the artifact first, then the runtime, then the AWS service.
+
+---
+
+## Security
+
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+This library is licensed under the MIT-0 License. See the [LICENSE](LICENSE) file.
