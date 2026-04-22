@@ -43,6 +43,17 @@ scan-report*.json
 # Threat model (internal review document)
 threat-model.md
 
+# Blog draft
+Deploying Quantized models on AWS.rtf
+Deploying Quantized models on AWS.md
+
+# Threat model MCP output
+V2185315584-threat-model/
+Deploying Quantized models on AWS.md
+
+# Threat model output (internal review)
+V2185315584-threat-model/
+
 # Build/scan artifacts
 repo-for-scan.zip
 trivy-scan-results.txt

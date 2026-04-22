@@ -156,8 +156,11 @@ This is the pattern: choose the artifact first, then the runtime, then the AWS s
 This project is sample code. If you adapt it for production, consider these changes:
 
 - **Mirror the base image to ECR**: Pull `ghcr.io/ggml-org/llama.cpp:server-cuda`, push it to your own ECR repository, and pin the Dockerfile `FROM` to the ECR image by SHA256 digest. This eliminates the external dependency on GitHub Container Registry.
+- **Pin HuggingFace model revisions**: Add `--revision <commit-sha>` to the `hf download` commands in the Dockerfile and set `OPTION_HF_REVISION` on the LMI container environment. Verify downloaded weights with `sha256sum` to prevent supply-chain substitution.
 - **Replace the SageMaker managed policy**: Swap `AmazonSageMakerFullAccess` for a custom policy with only the specific permissions needed for model hosting.
+- **Use SSO / IAM Identity Center**: Avoid long-lived AWS access keys on developer workstations. Configure AWS SSO for Terraform and CLI access.
 - **Pre-stage model weights in S3**: Instead of downloading from HuggingFace at build/deploy time, store the model artifacts in a private S3 bucket and load from there.
+- **Use remote Terraform state**: Configure an S3 backend with DynamoDB locking to avoid storing state files on local workstations.
 - **Deploy in a VPC**: Add VPC configuration to the SageMaker endpoints with VPC endpoints for SageMaker, ECR, S3, and KMS.
 - **Enable data capture**: If inference payloads need auditing, enable SageMaker data capture on the endpoint configurations.
 

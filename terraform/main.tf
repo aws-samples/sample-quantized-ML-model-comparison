@@ -62,7 +62,7 @@ resource "aws_ecr_repository" "llamacpp" {
 
 resource "aws_kms_key" "s3_codebuild" {
   description             = "CMK for CodeBuild source S3 bucket encryption"
-  deletion_window_in_days = 7
+  deletion_window_in_days = 30
   enable_key_rotation     = true
 
   policy = jsonencode({
@@ -103,6 +103,26 @@ resource "aws_kms_key" "s3_codebuild" {
           "kms:GenerateDataKey"
         ]
         Resource = "*"
+      },
+      {
+        Sid    = "AllowCloudWatchLogs"
+        Effect = "Allow"
+        Principal = {
+          Service = "logs.${var.aws_region}.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt*",
+          "kms:Decrypt*",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:Describe*"
+        ]
+        Resource = "*"
+        Condition = {
+          ArnLike = {
+            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/codebuild/*"
+          }
+        }
       }
     ]
   })
@@ -118,12 +138,42 @@ resource "aws_kms_alias" "s3_codebuild" {
 }
 
 # ---------------------------------------------------------------------------
+# ECR repository policy — restrict to same-account principals
+# ---------------------------------------------------------------------------
+
+resource "aws_ecr_repository_policy" "llamacpp" {
+  repository = aws_ecr_repository.llamacpp.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowSameAccountAccess"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:PutImage",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload"
+        ]
+      }
+    ]
+  })
+}
+
+# ---------------------------------------------------------------------------
 # KMS key for SageMaker endpoint encryption at rest
 # ---------------------------------------------------------------------------
 
 resource "aws_kms_key" "sagemaker_endpoint" {
   description             = "CMK for SageMaker endpoint data encryption at rest"
-  deletion_window_in_days = 7
+  deletion_window_in_days = 30
   enable_key_rotation     = true
 
   policy = jsonencode({
@@ -164,6 +214,26 @@ resource "aws_kms_key" "sagemaker_endpoint" {
           "kms:GenerateDataKey"
         ]
         Resource = "*"
+      },
+      {
+        Sid    = "AllowCloudWatchLogs"
+        Effect = "Allow"
+        Principal = {
+          Service = "logs.${var.aws_region}.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt*",
+          "kms:Decrypt*",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:Describe*"
+        ]
+        Resource = "*"
+        Condition = {
+          ArnLike = {
+            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/sagemaker/*"
+          }
+        }
       }
     ]
   })
@@ -176,6 +246,40 @@ resource "aws_kms_key" "sagemaker_endpoint" {
 resource "aws_kms_alias" "sagemaker_endpoint" {
   name          = "alias/qwen3-vl-sagemaker-endpoint"
   target_key_id = aws_kms_key.sagemaker_endpoint.key_id
+}
+
+# ---------------------------------------------------------------------------
+# CloudWatch Log Groups with retention and encryption
+# ---------------------------------------------------------------------------
+
+resource "aws_cloudwatch_log_group" "codebuild" {
+  name              = "/codebuild/qwen3-vl-llamacpp-build"
+  retention_in_days = 30
+  kms_key_id        = aws_kms_key.s3_codebuild.arn
+
+  tags = {
+    Project = "qwen3-vl-quantized-comparison"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "sagemaker_quantized" {
+  name              = "/aws/sagemaker/Endpoints/qwen3-vl-8b-quantized"
+  retention_in_days = 30
+  kms_key_id        = aws_kms_key.sagemaker_endpoint.arn
+
+  tags = {
+    Project = "qwen3-vl-quantized-comparison"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "sagemaker_full_precision" {
+  name              = "/aws/sagemaker/Endpoints/qwen3-vl-8b-full-precision"
+  retention_in_days = 30
+  kms_key_id        = aws_kms_key.sagemaker_endpoint.arn
+
+  tags = {
+    Project = "qwen3-vl-quantized-comparison"
+  }
 }
 
 # ---------------------------------------------------------------------------
