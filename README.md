@@ -4,7 +4,7 @@
 
 Side-by-side comparison of [Unsloth's](https://unsloth.ai) dynamically quantized Qwen3-VL-8B-Instruct (4-bit GGUF via llama.cpp) against the full-precision BF16 variant (via vLLM on SageMaker LMI), deployed on Amazon SageMaker real-time endpoints.
 
-This project supplements the blog post: **Quantization and Deploying Models on AWS**.
+This project supplements the blog post: **[Quantization and Deploying Models on AWS](TODO_INSERT_BLOG_URL)**.
 
 ## What This Does
 
@@ -143,7 +143,7 @@ Q4_K_M is widely considered the sweet spot for 4-bit quantization — it preserv
 
 A key idea from the companion blog: **the output artifact should drive the serving design**.
 
-The quantized model is exported as a GGUF file, which maps naturally to **llama.cpp** as the runtime. llama.cpp is lightweight, runs on a single GPU, and serves GGUF files directly via an OpenAI-compatible API. On AWS, that maps to a custom container (BYOC) on a small SageMaker endpoint.
+The quantized model is exported as a GGUF file, which maps naturally to **llama.cpp** as the runtime. llama.cpp is lightweight, runs on a single GPU, and serves GGUF files directly via a chat completions API. On AWS, that maps to a custom container (BYOC) on a small SageMaker endpoint.
 
 The full-precision model stays in safetensor format (BF16), which maps naturally to **vLLM** — a production GPU serving engine built for throughput and batching. On AWS, that maps to the SageMaker Large Model Inference (LMI) container.
 

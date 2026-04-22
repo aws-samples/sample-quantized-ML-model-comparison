@@ -323,7 +323,7 @@ def encode_image(image_path_or_url: str) -> str:
 def build_quantized_payload(
     prompt: str, image_b64: str | None, params: dict
 ) -> dict:
-    """Build an OpenAI-compatible chat completion payload for the llama.cpp BYOC endpoint.
+    """Build a chat completion payload for the llama.cpp BYOC endpoint.
 
     For text-only prompts the message content is a plain string.  For image
     prompts the content is a list containing a text block and an
@@ -360,9 +360,9 @@ def build_quantized_payload(
 def build_full_precision_payload(
     prompt: str, image_b64: str | None, params: dict
 ) -> dict:
-    """Build an OpenAI-compatible payload for the LMI/vLLM full-precision endpoint.
+    """Build a chat completion payload for the LMI/vLLM full-precision endpoint.
 
-    The SageMaker LMI container with vLLM also accepts the OpenAI-compatible
+    The SageMaker LMI container with vLLM also accepts the same
     chat completion format, so the structure mirrors
     :func:`build_quantized_payload`.
 
@@ -406,7 +406,7 @@ def invoke_endpoint(
 
     The *runtime_client* should be a ``boto3.client('sagemaker-runtime')``
     instance.  The function records wall-clock latency, parses the
-    OpenAI-compatible JSON response, and extracts generated text and token
+    JSON response, and extracts generated text and token
     count.
 
     Args:
