@@ -254,7 +254,7 @@ resource "aws_kms_alias" "sagemaker_endpoint" {
 
 resource "aws_cloudwatch_log_group" "codebuild" {
   name              = "/codebuild/qwen3-vl-llamacpp-build"
-  retention_in_days = 30
+  retention_in_days = 365
   kms_key_id        = aws_kms_key.s3_codebuild.arn
 
   tags = {
@@ -264,7 +264,7 @@ resource "aws_cloudwatch_log_group" "codebuild" {
 
 resource "aws_cloudwatch_log_group" "sagemaker_quantized" {
   name              = "/aws/sagemaker/Endpoints/qwen3-vl-8b-quantized"
-  retention_in_days = 30
+  retention_in_days = 365
   kms_key_id        = aws_kms_key.sagemaker_endpoint.arn
 
   tags = {
@@ -274,7 +274,7 @@ resource "aws_cloudwatch_log_group" "sagemaker_quantized" {
 
 resource "aws_cloudwatch_log_group" "sagemaker_full_precision" {
   name              = "/aws/sagemaker/Endpoints/qwen3-vl-8b-full-precision"
-  retention_in_days = 30
+  retention_in_days = 365
   kms_key_id        = aws_kms_key.sagemaker_endpoint.arn
 
   tags = {
