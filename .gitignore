@@ -46,6 +46,7 @@ threat-model.md
 # Blog draft
 Deploying Quantized models on AWS.rtf
 Deploying Quantized models on AWS.md
+Deploying Quantized models on AWS.docx
 
 # Threat model MCP output
 V2185315584-threat-model/
@@ -58,3 +59,4 @@ V2185315584-threat-model/
 repo-for-scan.zip
 trivy-scan-results.txt
 architecture-diagram.drawio
+architecture-diagram.drawio.xml
