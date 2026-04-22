@@ -40,6 +40,9 @@ compliance-review.txt
 scan-report.json
 scan-report*.json
 
+# Threat model (internal review document)
+threat-model.md
+
 # Build/scan artifacts
 repo-for-scan.zip
 trivy-scan-results.txt
