@@ -11,6 +11,10 @@ MMPROJ_PATH="/models/mmproj-F16.gguf"
 LLAMA_HOST="0.0.0.0"
 LLAMA_PORT="8081"
 NGINX_PORT="8080"
+NGINX_RUN_DIR="/home/appuser/nginx"
+
+# ── Create nginx temp directories ───────────────────────────────────────────
+mkdir -p "${NGINX_RUN_DIR}/client_body" "${NGINX_RUN_DIR}/proxy" "${NGINX_RUN_DIR}/fastcgi" "${NGINX_RUN_DIR}/uwsgi" "${NGINX_RUN_DIR}/scgi"
 
 # ── Start llama-server in the background ────────────────────────────────────
 echo "Starting llama-server on port ${LLAMA_PORT}..."
@@ -45,20 +49,20 @@ echo "llama-server is ready."
 # ── Configure nginx as a reverse proxy ──────────────────────────────────────
 cat > /etc/nginx/nginx.conf <<EOF
 worker_processes auto;
-pid /tmp/nginx/nginx.pid;
-error_log /tmp/nginx/error.log warn;
+pid ${NGINX_RUN_DIR}/nginx.pid;
+error_log ${NGINX_RUN_DIR}/error.log warn;
 
 events {
     worker_connections 128;
 }
 
 http {
-    access_log /tmp/nginx/access.log;
-    client_body_temp_path /tmp/nginx/client_body;
-    proxy_temp_path /tmp/nginx/proxy;
-    fastcgi_temp_path /tmp/nginx/fastcgi;
-    uwsgi_temp_path /tmp/nginx/uwsgi;
-    scgi_temp_path /tmp/nginx/scgi;
+    access_log ${NGINX_RUN_DIR}/access.log;
+    client_body_temp_path ${NGINX_RUN_DIR}/client_body;
+    proxy_temp_path ${NGINX_RUN_DIR}/proxy;
+    fastcgi_temp_path ${NGINX_RUN_DIR}/fastcgi;
+    uwsgi_temp_path ${NGINX_RUN_DIR}/uwsgi;
+    scgi_temp_path ${NGINX_RUN_DIR}/scgi;
 
     upstream llama_backend {
         server 127.0.0.1:${LLAMA_PORT};

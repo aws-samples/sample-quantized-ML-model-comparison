@@ -13,5 +13,5 @@ variable "quantized_instance_type" {
 variable "full_precision_instance_type" {
   type        = string
   default     = "ml.g5.12xlarge"
-  description = "SageMaker instance type for the full-precision BF16 model endpoint"
+  description = "SageMaker instance type for the full-precision BF16 model endpoint (ml.g5.12xlarge provides 4x A10G GPUs for tensor parallelism)"
 }

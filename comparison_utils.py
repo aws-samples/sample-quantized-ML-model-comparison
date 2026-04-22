@@ -71,10 +71,88 @@ class ComparisonResult:
 # ---------------------------------------------------------------------------
 
 PRICING: dict[str, float] = {
-    "ml.g5.xlarge": 1.41,     # USD/hour (us-east-2 on-demand)
-    "ml.g5.2xlarge": 1.52,    # USD/hour (us-east-2 on-demand)
-    "ml.g5.12xlarge": 7.09,   # USD/hour (us-east-2 on-demand)
+    "ml.g5.xlarge": 1.41,     # USD/hour (us-east-2 on-demand) — fallback values
+    "ml.g5.12xlarge": 7.09,   # USD/hour (us-east-2 on-demand) — fallback values
 }
+
+
+def get_live_pricing(instance_type: str, region: str = "us-east-2") -> float | None:
+    """Fetch live SageMaker on-demand pricing from the AWS Pricing API.
+
+    The Pricing API is only available in us-east-1 and ap-south-1.
+    Returns the hourly price in USD, or None if the lookup fails.
+
+    Args:
+        instance_type: SageMaker instance type (e.g. "ml.g5.xlarge").
+        region: AWS region code (e.g. "us-east-2").
+
+    Returns:
+        Hourly price in USD, or None if unavailable.
+    """
+    import json as _json
+
+    # Map region codes to Pricing API location names
+    region_names = {
+        "us-east-1": "US East (N. Virginia)",
+        "us-east-2": "US East (Ohio)",
+        "us-west-1": "US West (N. California)",
+        "us-west-2": "US West (Oregon)",
+        "eu-west-1": "EU (Ireland)",
+        "eu-central-1": "EU (Frankfurt)",
+        "ap-southeast-1": "Asia Pacific (Singapore)",
+        "ap-northeast-1": "Asia Pacific (Tokyo)",
+    }
+
+    location = region_names.get(region)
+    if not location:
+        return None
+
+    try:
+        # Pricing API is only available in us-east-1
+        pricing_client = boto3.client("pricing", region_name="us-east-1")
+        response = pricing_client.get_products(
+            ServiceCode="AmazonSageMaker",
+            Filters=[
+                {"Type": "TERM_MATCH", "Field": "instanceType", "Value": instance_type},
+                {"Type": "TERM_MATCH", "Field": "location", "Value": location},
+                {"Type": "TERM_MATCH", "Field": "component", "Value": "Hosting"},
+            ],
+            MaxResults=1,
+        )
+
+        if not response["PriceList"]:
+            return None
+
+        price_data = _json.loads(response["PriceList"][0])
+        terms = price_data["terms"]["OnDemand"]
+        price_dimensions = list(list(terms.values())[0]["priceDimensions"].values())
+        price_per_hour = float(price_dimensions[0]["pricePerUnit"]["USD"])
+        return price_per_hour
+
+    except Exception:
+        return None
+
+
+def get_pricing(region: str = "us-east-2") -> dict[str, float]:
+    """Get SageMaker pricing, using live API with hardcoded fallbacks.
+
+    Attempts to fetch live pricing from the AWS Pricing API. Falls back
+    to hardcoded values if the API is unavailable.
+
+    Args:
+        region: AWS region code.
+
+    Returns:
+        Dict mapping instance type to hourly price in USD.
+    """
+    pricing = {}
+    for instance_type, fallback_price in PRICING.items():
+        live_price = get_live_pricing(instance_type, region)
+        if live_price is not None and live_price > 0:
+            pricing[instance_type] = live_price
+        else:
+            pricing[instance_type] = fallback_price
+    return pricing
 
 
 # ---------------------------------------------------------------------------

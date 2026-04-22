@@ -37,7 +37,7 @@ locals {
 
 resource "aws_ecr_repository" "llamacpp" {
   name                 = local.ecr_repo_name
-  image_tag_mutability = "IMMUTABLE"
+  image_tag_mutability = "MUTABLE"
   force_delete         = true
 
   image_scanning_configuration {
@@ -418,6 +418,9 @@ resource "aws_sagemaker_model" "full_precision" {
       OPTION_ROLLING_BATCH          = "vllm"
       OPTION_TENSOR_PARALLEL_DEGREE = "4"
       OPTION_MAX_MODEL_LEN          = "4096"
+      OPTION_GPU_MEMORY_UTILIZATION = "0.95"
+      OPTION_ENFORCE_EAGER          = "true"
+      OPTION_LIMIT_MM_PER_PROMPT    = "image=1"
     }
   }
 

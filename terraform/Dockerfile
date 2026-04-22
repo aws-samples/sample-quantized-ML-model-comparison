@@ -38,10 +38,10 @@ RUN hf download \
     && ls -lh /models/mmproj-F16.gguf
 
 # ── Create non-root user and prepare writable directories ────────────────────
-RUN useradd -r -s /bin/false appuser \
+RUN useradd -r -m -s /bin/false appuser \
     && chown -R appuser:appuser /models \
-    && mkdir -p /tmp/nginx \
-    && chown -R appuser:appuser /tmp/nginx \
+    && mkdir -p /home/appuser/nginx \
+    && chown -R appuser:appuser /home/appuser/nginx \
     && chown -R appuser:appuser /var/log/nginx \
     && chown -R appuser:appuser /etc/nginx
 

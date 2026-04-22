@@ -16,33 +16,13 @@ This project supplements the blog post: **Quantization and Deploying Models on A
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────┐
-│                  Terraform                       │
-│                                                  │
-│  ┌──────────────┐      ┌──────────────────────┐ │
-│  │ ECR + BYOC   │      │ SageMaker LMI (vLLM) │ │
-│  │ llama.cpp    │      │ BF16 full precision   │ │
-│  │ Q4_K_M GGUF  │      │ ml.g5.12xlarge        │ │
-│  │ ml.g5.xlarge │      │                       │ │
-│  └──────┬───────┘      └──────────┬────────────┘ │
-└─────────┼─────────────────────────┼──────────────┘
-          │                         │
-          ▼                         ▼
-┌─────────────────────────────────────────────────┐
-│           Jupyter Notebook                       │
-│  • Image description, OCR, visual QA            │
-│  • Side-by-side output comparison               │
-│  • Latency & throughput charts                  │
-│  • Cost analysis                                │
-└─────────────────────────────────────────────────┘
-```
+![Quantized Model Comparison Architecture](images/architecture-diagram.png)
 
 ## Prerequisites
 
 - AWS account with SageMaker access
-- [Terraform](https://www.terraform.io/downloads) >= 1.0
-- AWS CLI configured with credentials
+- [Terraform](https://www.terraform.io/downloads) >= 1.0 — if you're new to Terraform, see the [Get Started tutorial](https://developer.hashicorp.com/terraform/tutorials/aws-get-started)
+- AWS CLI configured with credentials — see the [AWS CLI Getting Started guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 - SageMaker GPU quota in your target region:
   - `ml.g5.xlarge` for endpoint usage (at least 1)
   - `ml.g5.12xlarge` for endpoint usage (at least 1) — this often requires a [quota increase request](https://console.aws.amazon.com/servicequotas/)

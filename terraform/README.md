@@ -4,9 +4,9 @@
 
 ## Overview
 
-This Terraform configuration provisions two SageMaker real-time endpoints for comparing Unsloth's dynamically quantized Qwen3-VL-8B-Instruct (4-bit GGUF via llama.cpp) against the full-precision BF16 variant (via SageMaker LMI with vLLM). It creates:
+This Terraform configuration provisions two SageMaker real-time endpoints for comparing Unsloth's dynamically quantized Qwen3-VL-8B-Instruct (4-bit GGUF (GPT-Generated Unified Format) via llama.cpp) against the full-precision BF16 variant (via SageMaker LMI (Large Model Inference) with vLLM). It creates:
 
-- An **Amazon ECR repository** and builds/pushes a custom Docker container (BYOC) running llama.cpp with CUDA support
+- An **Amazon ECR repository** and builds/pushes a custom Docker container (BYOC — Bring Your Own Container) running llama.cpp with CUDA support
 - An **IAM execution role** with minimum permissions for SageMaker hosting and ECR access
 - A **quantized model endpoint** (`ml.g5.xlarge`) serving the Q4_K_M GGUF model via llama.cpp
 - A **full-precision endpoint** (`ml.g5.12xlarge`) serving the BF16 model via vLLM on SageMaker LMI
@@ -15,7 +15,7 @@ Both endpoints are used by the companion Jupyter notebook (`comparison_notebook.
 
 ## Prerequisites
 
-- **AWS CLI** configured with credentials that have permissions to create SageMaker, ECR, IAM, CodeBuild, and S3 resources
+- **AWS CLI** configured with credentials that have permissions to create SageMaker, ECR, IAM, CodeBuild, and S3 resources. If you haven't set up the AWS CLI, see the [AWS CLI Getting Started guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
 - **Terraform** >= 1.0
 - **No local Docker required** — the Docker image is built remotely via AWS CodeBuild
 - **Sufficient SageMaker GPU quota** in `us-east-2`:
@@ -80,7 +80,7 @@ aws service-quotas request-service-quota-increase \
 |----------|-------------|---------|
 | `aws_region` | AWS region for all resources | `us-east-2` |
 | `quantized_instance_type` | SageMaker instance type for the quantized GGUF endpoint | `ml.g5.xlarge` |
-| `full_precision_instance_type` | SageMaker instance type for the full-precision BF16 endpoint | `ml.g5.2xlarge` |
+| `full_precision_instance_type` | SageMaker instance type for the full-precision BF16 endpoint | `ml.g5.12xlarge` |
 
 Override defaults with a `terraform.tfvars` file or command-line flags:
 
@@ -98,7 +98,7 @@ terraform destroy
 
 Review the plan and type `yes` to confirm. This removes both SageMaker endpoints, endpoint configurations, models, the ECR repository, and the IAM role.
 
-> **Warning:** SageMaker endpoints incur charges as long as they are running. The `ml.g5.xlarge` costs approximately **$1.41/hr** and the `ml.g5.2xlarge` costs approximately **$1.52/hr** (us-east-2 on-demand pricing). Always run `terraform destroy` or delete the endpoints from the notebook's cleanup cell when you are finished.
+> **Warning:** SageMaker endpoints incur charges as long as they are running. The `ml.g5.xlarge` costs approximately **$1.41/hr** and the `ml.g5.12xlarge` costs approximately **$7.09/hr** (us-east-2 on-demand pricing), for a combined total of **~$8.50/hr**. Always run `terraform destroy` or delete the endpoints from the notebook's cleanup cell when you are finished.
 
 ## Troubleshooting
 
