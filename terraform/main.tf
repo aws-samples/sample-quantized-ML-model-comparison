@@ -27,8 +27,11 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 locals {
-  ecr_repo_name = "qwen3-vl-llamacpp"
-  ecr_image_uri = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/${local.ecr_repo_name}:latest"
+  ecr_repo_name  = "qwen3-vl-llamacpp"
+  # Use a content-based tag derived from the Dockerfile and entrypoint hashes
+  # so each build gets a unique immutable tag instead of overwriting :latest
+  ecr_image_tag  = substr(md5("${file("${path.module}/Dockerfile")}${file("${path.module}/serving_script/entrypoint.sh")}"), 0, 12)
+  ecr_image_uri  = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/${local.ecr_repo_name}:${local.ecr_image_tag}"
 }
 
 # ---------------------------------------------------------------------------
@@ -37,7 +40,7 @@ locals {
 
 resource "aws_ecr_repository" "llamacpp" {
   name                 = local.ecr_repo_name
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE"
   force_delete         = true
 
   image_scanning_configuration {
@@ -51,6 +54,25 @@ resource "aws_ecr_repository" "llamacpp" {
   tags = {
     Project = "qwen3-vl-quantized-comparison"
   }
+}
+
+# ---------------------------------------------------------------------------
+# KMS key for S3 bucket encryption
+# ---------------------------------------------------------------------------
+
+resource "aws_kms_key" "s3_codebuild" {
+  description             = "CMK for CodeBuild source S3 bucket encryption"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+
+  tags = {
+    Project = "qwen3-vl-quantized-comparison"
+  }
+}
+
+resource "aws_kms_alias" "s3_codebuild" {
+  name          = "alias/qwen3-vl-codebuild-s3"
+  target_key_id = aws_kms_key.s3_codebuild.key_id
 }
 
 # ---------------------------------------------------------------------------
@@ -80,7 +102,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "codebuild_source"
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "aws:kms"
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.s3_codebuild.arn
     }
     bucket_key_enabled = true
   }
@@ -105,6 +128,17 @@ resource "aws_s3_bucket_lifecycle_configuration" "codebuild_source" {
 
     noncurrent_version_expiration {
       noncurrent_days = 30
+    }
+  }
+
+  rule {
+    id     = "abort-incomplete-uploads"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
     }
   }
 }
@@ -200,6 +234,15 @@ resource "aws_iam_role_policy" "codebuild_permissions" {
         Resource = "${aws_s3_bucket.codebuild_source.arn}/*"
       },
       {
+        Sid    = "KMSDecrypt"
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey"
+        ]
+        Resource = aws_kms_key.s3_codebuild.arn
+      },
+      {
         Sid    = "CloudWatchLogs"
         Effect = "Allow"
         Action = [
@@ -238,6 +281,11 @@ resource "aws_codebuild_project" "docker_build" {
     }
 
     environment_variable {
+      name  = "IMAGE_TAG"
+      value = local.ecr_image_tag
+    }
+
+    environment_variable {
       name  = "AWS_DEFAULT_REGION"
       value = var.aws_region
     }
@@ -261,12 +309,12 @@ resource "aws_codebuild_project" "docker_build" {
             - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
         build:
           commands:
-            - echo Building Docker image...
-            - docker build -t $ECR_REPO_URI:latest .
+            - echo Building Docker image with tag $IMAGE_TAG...
+            - docker build -t $ECR_REPO_URI:$IMAGE_TAG .
         post_build:
           commands:
             - echo Pushing Docker image to ECR...
-            - docker push $ECR_REPO_URI:latest
+            - docker push $ECR_REPO_URI:$IMAGE_TAG
             - echo Build completed on $(date)
     BUILDSPEC
   }
