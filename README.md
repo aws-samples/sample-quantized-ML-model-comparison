@@ -4,7 +4,7 @@
 
 Side-by-side comparison of [Unsloth's](https://unsloth.ai) dynamically quantized Qwen3-VL-8B-Instruct (4-bit GGUF via llama.cpp) against the full-precision BF16 variant (via vLLM on SageMaker LMI), deployed on Amazon SageMaker real-time endpoints.
 
-This project supplements the blog post: **[Quantization and Deploying Models on AWS](TODO_INSERT_BLOG_URL)**.
+This project supplements the blog post: **[Quantization and Deploying Models on AWS](TODO_BLOG_URL_PENDING_PUBLICATION)**.
 
 ## What This Does
 
