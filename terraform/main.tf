@@ -65,6 +65,48 @@ resource "aws_kms_key" "s3_codebuild" {
   deletion_window_in_days = 7
   enable_key_rotation     = true
 
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowKeyAdministration"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action = [
+          "kms:Create*",
+          "kms:Describe*",
+          "kms:Enable*",
+          "kms:List*",
+          "kms:Put*",
+          "kms:Update*",
+          "kms:Revoke*",
+          "kms:Disable*",
+          "kms:Get*",
+          "kms:Delete*",
+          "kms:TagResource",
+          "kms:UntagResource",
+          "kms:ScheduleKeyDeletion",
+          "kms:CancelKeyDeletion"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowS3Encryption"
+        Effect = "Allow"
+        Principal = {
+          AWS = aws_iam_role.codebuild_role.arn
+        }
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+
   tags = {
     Project = "qwen3-vl-quantized-comparison"
   }
@@ -73,6 +115,67 @@ resource "aws_kms_key" "s3_codebuild" {
 resource "aws_kms_alias" "s3_codebuild" {
   name          = "alias/qwen3-vl-codebuild-s3"
   target_key_id = aws_kms_key.s3_codebuild.key_id
+}
+
+# ---------------------------------------------------------------------------
+# KMS key for SageMaker endpoint encryption at rest
+# ---------------------------------------------------------------------------
+
+resource "aws_kms_key" "sagemaker_endpoint" {
+  description             = "CMK for SageMaker endpoint data encryption at rest"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowKeyAdministration"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action = [
+          "kms:Create*",
+          "kms:Describe*",
+          "kms:Enable*",
+          "kms:List*",
+          "kms:Put*",
+          "kms:Update*",
+          "kms:Revoke*",
+          "kms:Disable*",
+          "kms:Get*",
+          "kms:Delete*",
+          "kms:TagResource",
+          "kms:UntagResource",
+          "kms:ScheduleKeyDeletion",
+          "kms:CancelKeyDeletion"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowSageMakerEncryption"
+        Effect = "Allow"
+        Principal = {
+          AWS = aws_iam_role.sagemaker_execution_role.arn
+        }
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+
+  tags = {
+    Project = "qwen3-vl-quantized-comparison"
+  }
+}
+
+resource "aws_kms_alias" "sagemaker_endpoint" {
+  name          = "alias/qwen3-vl-sagemaker-endpoint"
+  target_key_id = aws_kms_key.sagemaker_endpoint.key_id
 }
 
 # ---------------------------------------------------------------------------
@@ -422,6 +525,8 @@ resource "aws_sagemaker_model" "quantized" {
 resource "aws_sagemaker_endpoint_configuration" "quantized" {
   name = "qwen3-vl-8b-quantized-config"
 
+  kms_key_arn = aws_kms_key.sagemaker_endpoint.arn
+
   production_variants {
     variant_name           = "AllTraffic"
     model_name             = aws_sagemaker_model.quantized.name
@@ -484,6 +589,8 @@ resource "aws_sagemaker_model" "full_precision" {
 
 resource "aws_sagemaker_endpoint_configuration" "full_precision" {
   name = "qwen3-vl-8b-full-precision-config"
+
+  kms_key_arn = aws_kms_key.sagemaker_endpoint.arn
 
   production_variants {
     variant_name           = "AllTraffic"

@@ -28,12 +28,45 @@ This project includes or depends on the following third-party components:
    - Usage: Used as a reverse proxy inside the BYOC container to translate
      SageMaker's /ping and /invocations contract to llama.cpp's API.
 
-5. Test Images (Unsplash)
-   - Source: https://unsplash.com
-   - License: Unsplash License (https://unsplash.com/license)
-     Free to use for commercial and non-commercial purposes. No permission
-     needed. Attribution not required but appreciated.
-   - Usage: Test images downloaded at notebook runtime for image comparison tasks.
+5. Test Images (Wikimedia Commons, CC-BY)
+   All test images are sourced from Wikimedia Commons under Creative Commons
+   Attribution licenses. Images are bundled in the test_images/ directory.
+
+   a) market.jpg
+      - Title: "Busy market"
+      - Author: Joe Goldberg (Seattle, WA, USA)
+      - Source: https://commons.wikimedia.org/wiki/File:Busy_market_(4081145314).jpg
+      - License: CC-BY 2.0 (https://creativecommons.org/licenses/by/2.0/)
+
+   b) market_singapore.jpg
+      - Title: "Bugis Street Market"
+      - Author: Wikimedia Commons contributor
+      - Source: https://commons.wikimedia.org/wiki/File:Bugis_Street_Market.jpg
+      - License: CC-BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+
+   c) hollywood_sign.jpg
+      - Title: "Hollywood Sign"
+      - Author: Wikimedia Commons contributor
+      - Source: https://commons.wikimedia.org/wiki/File:Hollywood_Sign_(Zuschnitt).jpg
+      - License: CC-BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/)
+
+   d) cat_snow.jpg
+      - Title: "Felis catus - cat on snow"
+      - Author: Von.g" (Wikimedia Commons)
+      - Source: https://commons.wikimedia.org/wiki/File:Felis_catus-cat_on_snow.jpg
+      - License: CC-BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/)
+
+   e) shibuya_crossing.jpg
+      - Title: "Shibuya Crossing"
+      - Author: Wikimedia Commons contributor
+      - Source: https://commons.wikimedia.org/wiki/File:Shibuya_Crossing.jpg
+      - License: CC-BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+
+   f) street_seoul.jpg
+      - Title: "Busy street, Seoul"
+      - Author: Wikimedia Commons contributor
+      - Source: https://commons.wikimedia.org/wiki/File:Busy_street,_Seoul.jpg
+      - License: CC-BY 2.0 (https://creativecommons.org/licenses/by/2.0/)
 
 
 Python Dependencies
