@@ -759,10 +759,13 @@ resource "aws_sagemaker_notebook_instance_lifecycle_configuration" "setup" {
   on_create = base64encode(<<-EOF
     #!/bin/bash
     set -e
-    # Install Python dependencies into the default conda environment
-    sudo -u ec2-user -i <<'INNEREOF'
+    # Install Python dependencies in the background to avoid the 5-minute
+    # lifecycle config timeout. The nohup process continues after the
+    # lifecycle script exits. A marker file signals completion.
+    nohup sudo -u ec2-user -i <<'INNEREOF' &
     source activate base
-    pip install -r /home/ec2-user/SageMaker/sample-quantized-ML-model-comparison/requirements.txt
+    pip install --quiet -r /home/ec2-user/SageMaker/sample-quantized-ML-model-comparison/requirements.txt
+    touch /home/ec2-user/SageMaker/.deps-installed
     INNEREOF
   EOF
   )
