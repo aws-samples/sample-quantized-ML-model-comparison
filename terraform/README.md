@@ -81,12 +81,32 @@ aws service-quotas request-service-quota-increase \
 | `aws_region` | AWS region for all resources | `us-east-2` |
 | `quantized_instance_type` | SageMaker instance type for the quantized GGUF endpoint | `ml.g5.xlarge` |
 | `full_precision_instance_type` | SageMaker instance type for the full-precision BF16 endpoint | `ml.g5.12xlarge` |
+| `create_notebook_instance` | Whether to provision a SageMaker Notebook Instance | `true` |
+| `notebook_instance_type` | Instance type for the Notebook Instance | `ml.t3.medium` |
 
 Override defaults with a `terraform.tfvars` file or command-line flags:
 
 ```bash
 terraform apply -var="aws_region=us-west-2"
 ```
+
+## SageMaker Notebook Instance
+
+By default, `terraform apply` provisions a SageMaker Notebook Instance with the repository pre-cloned and dependencies installed. After the apply completes, get the notebook URL:
+
+```bash
+terraform output notebook_instance_url
+```
+
+Open the URL in your browser. The comparison notebook, test images, and all dependencies are ready to use.
+
+If you already have a Jupyter environment, skip the Notebook Instance:
+
+```bash
+terraform apply -var="create_notebook_instance=false"
+```
+
+> **Note:** The Notebook Instance uses `ml.t3.medium` by default (~$0.05/hr). Override with `-var="notebook_instance_type=ml.t3.large"` if needed. The notebook itself doesn't need a GPU — inference runs on the SageMaker endpoints.
 
 ## Cleanup
 

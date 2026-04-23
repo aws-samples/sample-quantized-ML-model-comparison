@@ -1,0 +1,74 @@
+[
+  {
+    "image_path": "test_images/cat_snow.jpg",
+    "prompt": "What animal is in this image?",
+    "expected_answer": "cat",
+    "category": "VQA"
+  },
+  {
+    "image_path": "test_images/cat_snow.jpg",
+    "prompt": "Describe the setting of this image in one sentence.",
+    "expected_answer": "A cat is sitting in the snow outdoors.",
+    "category": "scene_description"
+  },
+  {
+    "image_path": "test_images/hollywood_sign.jpg",
+    "prompt": "What text is visible in this image?",
+    "expected_answer": "HOLLYWOOD",
+    "category": "OCR"
+  },
+  {
+    "image_path": "test_images/hollywood_sign.jpg",
+    "prompt": "What landmark is shown?",
+    "expected_answer": "The Hollywood Sign",
+    "category": "VQA"
+  },
+  {
+    "image_path": "test_images/market.jpg",
+    "prompt": "Describe this image in one sentence.",
+    "expected_answer": "An outdoor market with various stalls and goods.",
+    "category": "image_description"
+  },
+  {
+    "image_path": "test_images/market_singapore.jpg",
+    "prompt": "What is the main subject of this image?",
+    "expected_answer": "A market or street food area",
+    "category": "object_identification"
+  },
+  {
+    "image_path": "test_images/shibuya_crossing.jpg",
+    "prompt": "What city is this likely in?",
+    "expected_answer": "Tokyo",
+    "category": "scene_description"
+  },
+  {
+    "image_path": "test_images/shibuya_crossing.jpg",
+    "prompt": "Is this a busy or quiet scene?",
+    "expected_answer": "busy",
+    "category": "VQA"
+  },
+  {
+    "image_path": "test_images/street_seoul.jpg",
+    "prompt": "Describe the setting.",
+    "expected_answer": "A street scene in an urban area",
+    "category": "scene_description"
+  },
+  {
+    "image_path": "test_images/street_seoul.jpg",
+    "prompt": "Are there any signs with text visible?",
+    "expected_answer": "Yes",
+    "category": "OCR"
+  },
+  {
+    "image_path": "test_images/market.jpg",
+    "prompt": "List the main objects visible.",
+    "expected_answer": "Stalls, goods, people",
+    "category": "object_identification"
+  },
+  {
+    "image_path": "test_images/cat_snow.jpg",
+    "prompt": "What is happening in this image?",
+    "expected_answer": "A cat is in a snowy outdoor setting",
+    "category": "image_description"
+  }
+]

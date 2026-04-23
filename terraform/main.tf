@@ -743,3 +743,42 @@ resource "aws_sagemaker_endpoint" "full_precision" {
     ModelVariant = "full-precision-bf16"
   }
 }
+
+# ---------------------------------------------------------------------------
+# Optional SageMaker Notebook Instance
+# ---------------------------------------------------------------------------
+# Provisions a Jupyter environment with the repository pre-cloned and
+# dependencies installed. Gated behind var.create_notebook_instance
+# (default false) so existing users are unaffected.
+# ---------------------------------------------------------------------------
+
+resource "aws_sagemaker_notebook_instance_lifecycle_configuration" "setup" {
+  count = var.create_notebook_instance ? 1 : 0
+  name  = "qwen3-vl-notebook-setup"
+
+  on_create = base64encode(<<-EOF
+    #!/bin/bash
+    set -e
+    # Install Python dependencies into the default conda environment
+    sudo -u ec2-user -i <<'INNEREOF'
+    source activate base
+    pip install -r /home/ec2-user/SageMaker/sample-quantized-ML-model-comparison/requirements.txt
+    INNEREOF
+  EOF
+  )
+}
+
+resource "aws_sagemaker_notebook_instance" "notebook" {
+  count                  = var.create_notebook_instance ? 1 : 0
+  name                   = "qwen3-vl-comparison-notebook"
+  instance_type          = var.notebook_instance_type
+  role_arn               = aws_iam_role.sagemaker_execution_role.arn
+  default_code_repository = "https://github.com/aws-samples/sample-quantized-ML-model-comparison.git"
+  lifecycle_config_name  = aws_sagemaker_notebook_instance_lifecycle_configuration.setup[0].name
+
+  depends_on = [time_sleep.wait_for_iam]
+
+  tags = {
+    Project = "qwen3-vl-quantized-comparison"
+  }
+}

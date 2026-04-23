@@ -26,7 +26,7 @@ This project supplements the blog post: **[Quantization and Deploying Models on 
 - SageMaker GPU quota in your target region:
   - `ml.g5.xlarge` for endpoint usage (at least 1)
   - `ml.g5.12xlarge` for endpoint usage (at least 1) — this often requires a [quota increase request](https://console.aws.amazon.com/servicequotas/)
-- A Jupyter environment to run the notebook (SageMaker Studio, local, etc.)
+- A Jupyter environment to run the notebook (provisioned automatically by Terraform, or bring your own)
 
 ## Quick Start
 
@@ -47,9 +47,15 @@ The first deploy takes ~15-20 minutes (CodeBuild + endpoint startup).
 
 ### 2. Run the Notebook
 
-Open `comparison_notebook.ipynb` in your Jupyter environment. Make sure `comparison_utils.py` is in the same directory.
+Terraform provisions a SageMaker Notebook Instance with the repo pre-cloned. Get the URL:
 
-If using SageMaker Studio, upload both files or copy them via S3.
+```bash
+terraform output notebook_instance_url
+```
+
+Open the URL in your browser — the comparison notebook, test images, and all dependencies are already there. Just open `comparison_notebook.ipynb` and run the cells.
+
+> **Already have a Jupyter environment?** Add `-var="create_notebook_instance=false"` to skip the Notebook Instance and run the notebook locally or in SageMaker Studio instead. Make sure `comparison_utils.py`, `benchmark_runner.py`, and `default_benchmark.json` are in the same directory as the notebook.
 
 The notebook will:
 1. Download test images locally
@@ -66,6 +72,66 @@ To avoid ongoing charges (~$8.50/hr while both endpoints are running):
 cd terraform
 terraform destroy
 ```
+
+## Benchmarking
+
+The notebook includes an objective quality evaluation framework that measures how quantization affects model output quality using structured benchmarks.
+
+### Built-in Benchmark
+
+The default benchmark dataset (`default_benchmark.json`) contains 12 entries covering:
+- **VQA** (Visual Question Answering) — e.g., "What animal is in this image?"
+- **OCR** (Text Extraction) — e.g., "What text is visible in this image?"
+- **Image Description** — e.g., "Describe this image in one sentence."
+- **Scene Description** — e.g., "What city is this likely in?"
+- **Object Identification** — e.g., "What is the main subject of this image?"
+
+Each entry is evaluated against both models, and three quality metrics are computed:
+- **Exact Match** — case-insensitive string equality between generated and expected answers
+- **BLEU** — n-gram precision score (0.0–1.0)
+- **ROUGE-L** — longest common subsequence F-measure (0.0–1.0)
+
+### Custom Benchmark Dataset
+
+Provide your own benchmark dataset by setting `BENCHMARK_DATASET_PATH` in the notebook's benchmark configuration cell. Supported formats:
+
+**CSV** (required columns: `image_path`, `prompt`, `expected_answer`; optional: `category`):
+```csv
+image_path,prompt,expected_answer,category
+test_images/cat_snow.jpg,What animal is in this image?,cat,VQA
+test_images/hollywood_sign.jpg,What text is visible?,HOLLYWOOD,OCR
+```
+
+**JSON** (list of objects with the same keys):
+```json
+[
+  {"image_path": "test_images/cat_snow.jpg", "prompt": "What animal?", "expected_answer": "cat", "category": "VQA"}
+]
+```
+
+If no custom dataset is provided, the built-in default is used automatically.
+
+### Interpreting the Degradation Report
+
+The benchmark produces a degradation report comparing both models:
+
+| Column | Meaning |
+|--------|---------|
+| Quantized / Full Precision | Aggregate score for each model (higher is better) |
+| Difference | Quantized minus Full Precision (negative means quantized scored lower) |
+| Relative Change | Percentage change relative to full precision |
+| Assessment | "No degradation" if scores are equal, otherwise shows the direction |
+
+Per-category breakdowns show which task types (VQA, OCR, etc.) are most affected by quantization.
+
+## Running Tests
+
+```bash
+pip install -r requirements.txt
+python -m pytest tests/ -v
+```
+
+The test suite includes unit tests for the benchmark runner, dataset loading, notebook structure validation, and computation functions.
 
 ## Cost Estimate
 
@@ -91,11 +157,18 @@ Edit `terraform/variables.tf` to change defaults:
 ├── README.md                      # This file
 ├── comparison_notebook.ipynb      # Main comparison notebook
 ├── comparison_utils.py            # Shared data models and helper functions
-├── requirements.txt               # Python dependencies
+├── benchmark_runner.py            # Benchmark evaluation framework
+├── default_benchmark.json         # Built-in benchmark dataset (12 entries)
+├── requirements.txt               # Python dependencies (pinned versions)
+├── test_images/                   # Sample images for comparison and benchmarks
+├── tests/                         # Test suite (pytest + Hypothesis)
+│   ├── test_benchmark_runner.py   # Unit tests for benchmark runner
+│   ├── test_load_benchmark_dataset.py  # Tests for dataset loading
+│   └── test_notebook_structure.py # Notebook structure validation
 ├── terraform/
-│   ├── main.tf                    # SageMaker endpoints, ECR, CodeBuild
-│   ├── variables.tf               # Configurable variables (region, instance types)
-│   ├── outputs.tf                 # Endpoint names
+│   ├── main.tf                    # SageMaker endpoints, ECR, CodeBuild, optional Notebook Instance
+│   ├── variables.tf               # Configurable variables (region, instance types, notebook)
+│   ├── outputs.tf                 # Endpoint names, notebook URL
 │   ├── iam.tf                     # IAM roles for SageMaker and CodeBuild
 │   ├── Dockerfile                 # BYOC container for llama.cpp
 │   ├── serving_script/

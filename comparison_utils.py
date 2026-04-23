@@ -400,7 +400,7 @@ def build_full_precision_payload(
 
 
 def invoke_endpoint(
-    endpoint_name: str, payload: dict, runtime_client
+    endpoint_name: str, payload: dict, runtime_client: "botocore.client.BaseClient"
 ) -> InferenceResult:
     """Send a payload to a SageMaker endpoint and return an InferenceResult.
 
