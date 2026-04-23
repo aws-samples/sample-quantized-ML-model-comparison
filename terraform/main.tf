@@ -631,7 +631,7 @@ resource "aws_sagemaker_model" "quantized" {
 resource "aws_sagemaker_endpoint_configuration" "quantized" {
   name = "qwen3-vl-8b-quantized-config"
 
-  kms_key_arn = aws_kms_key.sagemaker_endpoint.arn
+  # NVMe instance storage is hardware-encrypted; KMS volume encryption not applicable
 
   production_variants {
     variant_name           = "AllTraffic"
@@ -677,9 +677,6 @@ resource "aws_sagemaker_model" "full_precision" {
       OPTION_ROLLING_BATCH          = "vllm"
       OPTION_TENSOR_PARALLEL_DEGREE = "4"
       OPTION_MAX_MODEL_LEN          = "4096"
-      OPTION_GPU_MEMORY_UTILIZATION = "0.95"
-      OPTION_ENFORCE_EAGER          = "true"
-      OPTION_LIMIT_MM_PER_PROMPT    = "image=1"
     }
   }
 
@@ -696,7 +693,7 @@ resource "aws_sagemaker_model" "full_precision" {
 resource "aws_sagemaker_endpoint_configuration" "full_precision" {
   name = "qwen3-vl-8b-full-precision-config"
 
-  kms_key_arn = aws_kms_key.sagemaker_endpoint.arn
+  # NVMe instance storage is hardware-encrypted; KMS volume encryption not applicable
 
   production_variants {
     variant_name           = "AllTraffic"
