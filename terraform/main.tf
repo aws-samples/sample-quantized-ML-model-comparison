@@ -12,6 +12,10 @@ terraform {
       source  = "hashicorp/archive"
       version = "~> 2.0"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.9"
+    }
   }
 }
 
@@ -548,14 +552,30 @@ resource "aws_codebuild_project" "docker_build" {
 # ---------------------------------------------------------------------------
 # Trigger CodeBuild and wait for completion
 # ---------------------------------------------------------------------------
+# Wait for IAM eventual consistency before using roles
+# IAM policies can take up to 30 seconds to propagate after creation.
+# Without this delay, CodeBuild and SageMaker may fail with ACCESS_DENIED.
+# ---------------------------------------------------------------------------
+
+resource "time_sleep" "wait_for_iam" {
+  depends_on = [
+    aws_iam_role_policy.codebuild_permissions,
+    aws_iam_role_policy.sagemaker_custom_permissions,
+    aws_iam_role_policy_attachment.sagemaker_full_access,
+  ]
+
+  create_duration = "30s"
+}
+
+# ---------------------------------------------------------------------------
 
 resource "null_resource" "codebuild_trigger" {
   depends_on = [
     aws_codebuild_project.docker_build,
     aws_s3_object.build_context,
     aws_ecr_repository.llamacpp,
-    aws_iam_role_policy.codebuild_permissions,
     aws_cloudwatch_log_group.codebuild,
+    time_sleep.wait_for_iam,
   ]
 
   triggers = {
@@ -612,11 +632,11 @@ resource "aws_sagemaker_model" "quantized" {
   name               = "qwen3-vl-8b-quantized"
   execution_role_arn = aws_iam_role.sagemaker_execution_role.arn
 
+  depends_on = [null_resource.codebuild_trigger, time_sleep.wait_for_iam]
+
   primary_container {
     image = local.ecr_image_uri
   }
-
-  depends_on = [null_resource.codebuild_trigger]
 
   tags = {
     Project      = "qwen3-vl-quantized-comparison"
@@ -667,6 +687,8 @@ resource "aws_sagemaker_endpoint" "quantized" {
 resource "aws_sagemaker_model" "full_precision" {
   name               = "qwen3-vl-8b-full-precision"
   execution_role_arn = aws_iam_role.sagemaker_execution_role.arn
+
+  depends_on = [time_sleep.wait_for_iam]
 
   primary_container {
     image = "763104351884.dkr.ecr.${var.aws_region}.amazonaws.com/djl-inference:0.35.0-lmi17.0.0-cu128"
