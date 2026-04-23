@@ -234,7 +234,8 @@ This project is sample code. If you adapt it for production, consider these chan
 - **Use SSO / IAM Identity Center**: Avoid long-lived AWS access keys on developer workstations. Configure AWS SSO for Terraform and CLI access.
 - **Pre-stage model weights in S3**: Instead of downloading from HuggingFace at build/deploy time, store the model artifacts in a private S3 bucket and load from there.
 - **Use remote Terraform state**: Configure an S3 backend with DynamoDB locking to avoid storing state files on local workstations.
-- **Deploy in a VPC**: Add VPC configuration to the SageMaker endpoints with VPC endpoints for SageMaker, ECR, S3, and KMS.
+- **Deploy in a VPC**: Add VPC configuration to the SageMaker endpoints and notebook instance with VPC endpoints for SageMaker, ECR, S3, and KMS. This prevents data from traversing the public internet and limits the network attack surface.
+- **Restrict notebook instance access**: The notebook instance is provisioned with root access disabled and KMS encryption at rest. For additional hardening, place it in a private VPC subnet with a NAT gateway for outbound access, and restrict inbound access using security groups or presigned URLs instead of direct internet access.
 - **Enable data capture**: If inference payloads need auditing, enable SageMaker data capture on the endpoint configurations.
 
 ---
