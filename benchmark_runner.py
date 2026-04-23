@@ -18,9 +18,6 @@ from dataclasses import dataclass
 
 import boto3
 
-from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
-from rouge_score import rouge_scorer
-
 
 @dataclass
 class BenchmarkEntry:
@@ -348,6 +345,8 @@ def compute_bleu_score(generated: str, expected: str) -> float:
         A float in ``[0.0, 1.0]``.  Returns ``0.0`` if either string
         is empty after stripping whitespace.
     """
+    from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
+
     gen_tokens = generated.split()
     ref_tokens = expected.split()
 
@@ -374,6 +373,8 @@ def compute_rouge_l_score(generated: str, expected: str) -> float:
         A float in ``[0.0, 1.0]``.  Returns ``0.0`` if either string
         is empty after stripping whitespace.
     """
+    from rouge_score import rouge_scorer
+
     if not generated.strip() or not expected.strip():
         return 0.0
 
