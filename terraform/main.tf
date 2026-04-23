@@ -554,6 +554,8 @@ resource "null_resource" "codebuild_trigger" {
     aws_codebuild_project.docker_build,
     aws_s3_object.build_context,
     aws_ecr_repository.llamacpp,
+    aws_iam_role_policy.codebuild_permissions,
+    aws_cloudwatch_log_group.codebuild,
   ]
 
   triggers = {
