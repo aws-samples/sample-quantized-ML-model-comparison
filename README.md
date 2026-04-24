@@ -166,10 +166,16 @@ Edit `terraform/variables.tf` to change defaults:
 │   ├── test_load_benchmark_dataset.py  # Tests for dataset loading
 │   └── test_notebook_structure.py # Notebook structure validation
 ├── terraform/
-│   ├── main.tf                    # SageMaker endpoints, ECR, CodeBuild, optional Notebook Instance
+│   ├── main.tf                    # Provider config, data sources, locals, IAM wait
 │   ├── variables.tf               # Configurable variables (region, instance types, notebook)
 │   ├── outputs.tf                 # Endpoint names, notebook URL
 │   ├── iam.tf                     # IAM roles for SageMaker and CodeBuild
+│   ├── kms.tf                     # KMS keys for S3 and SageMaker encryption
+│   ├── s3.tf                      # S3 bucket for CodeBuild source artifacts
+│   ├── ecr.tf                     # ECR repository and access policy
+│   ├── codebuild.tf               # CodeBuild project, trigger, log group
+│   ├── sagemaker.tf               # Models, endpoint configs, endpoints, log groups
+│   ├── notebook.tf                # Optional SageMaker Notebook Instance
 │   ├── Dockerfile                 # BYOC container for llama.cpp
 │   ├── serving_script/
 │   │   └── entrypoint.sh          # Container entrypoint (llama-server + nginx)
