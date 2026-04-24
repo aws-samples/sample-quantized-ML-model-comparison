@@ -6,6 +6,8 @@ for inference results and comparison results, along with functions for calculati
 latency, throughput, cost, and aggregated metrics.
 """
 
+from __future__ import annotations
+
 import base64
 import json
 import os

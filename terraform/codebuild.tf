@@ -28,7 +28,7 @@ resource "aws_codebuild_project" "docker_build" {
     compute_type                = "BUILD_GENERAL1_LARGE"
     image                       = "aws/codebuild/standard:7.0"
     type                        = "LINUX_CONTAINER"
-    privileged_mode             = true  # Required for Docker-in-Docker builds
+    privileged_mode             = true # Required for Docker-in-Docker builds
     image_pull_credentials_type = "CODEBUILD"
 
     environment_variable {
