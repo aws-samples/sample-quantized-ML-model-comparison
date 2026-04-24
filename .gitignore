@@ -18,46 +18,34 @@ terraform/.build-context.zip
 *.tfstate
 *.tfstate.backup
 
-# Kiro specs (internal development)
+# IDE / editor
 .kiro/
 
 # OS
 .DS_Store
 
-# SSH keys (never commit)
+# Keys
 gitkey
 gitkey.pub
 *.pem
 
-# Security scan justifications (internal review document)
+# Local working files
 security-scan-justifications.txt
 security-scan-justifications-for-review.txt
-
-# Compliance review (internal review document)
 compliance-review.txt
-
-# Scan reports (internal review documents)
 scan-report.json
 scan-report*.json
-
-# Threat model (internal review document)
 threat-model.md
+V2185315584-threat-model/
+repo-for-scan.zip
+trivy-scan-results.txt
+last_working/
 
-# Blog draft
+# Blog drafts
 Deploying Quantized models on AWS.rtf
 Deploying Quantized models on AWS.md
 Deploying Quantized models on AWS.docx
 
-# Threat model MCP output
-V2185315584-threat-model/
-Deploying Quantized models on AWS.md
-
-# Threat model output (internal review)
-V2185315584-threat-model/
-
-# Build/scan artifacts
-repo-for-scan.zip
-trivy-scan-results.txt
+# Diagram source (PNG is committed, XML is local)
 architecture-diagram.drawio
 architecture-diagram.drawio.xml
-last_working/
