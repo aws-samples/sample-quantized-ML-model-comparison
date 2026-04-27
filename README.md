@@ -9,7 +9,7 @@ This project supplements the blog post: **[Quantization and Deploying Models on 
 ## What This Does
 
 - Deploys two SageMaker endpoints via Terraform:
-  - **Quantized**: Unsloth Q4_K_M GGUF served by llama.cpp in a custom container (`ml.g5.xlarge`, ~$1.41/hr)
+  - **Quantized**: Unsloth Q4_K_XL GGUF served by llama.cpp in a custom container (`ml.g5.xlarge`, ~$1.41/hr)
   - **Full-Precision**: BF16 served by vLLM via SageMaker LMI (`ml.g5.12xlarge`, ~$7.09/hr)
 - Runs a Jupyter notebook that sends identical image prompts to both endpoints
 - Compares output quality, latency, throughput, and cost side by side
@@ -137,7 +137,7 @@ The test suite includes unit tests for the benchmark runner, dataset loading, no
 
 | Endpoint | Instance | Hourly Cost |
 |----------|----------|-------------|
-| Quantized (Q4_K_M GGUF) | ml.g5.xlarge | ~$1.41/hr |
+| Quantized (Q4_K_XL GGUF) | ml.g5.xlarge | ~$1.41/hr |
 | Full-Precision (BF16) | ml.g5.12xlarge | ~$7.09/hr |
 | **Total** | | **~$8.50/hr** |
 
@@ -207,16 +207,16 @@ The result is a model that's nearly as accurate as the full-precision original, 
 
 ### GGUF Format
 
-The quantized models in this project use the [GGUF format](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md) (GPT-Generated Unified Format), the standard file format for llama.cpp inference. GGUF files are self-contained — they include the model weights, tokenizer configuration, and metadata in a single file. This makes them easy to deploy: download one file, point llama.cpp at it, and start serving.
+The quantized models in this project use the [GGUF format](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md), the standard file format for local CPU and GPU inference from llama.cpp and llama.cpp supported backends (e.g. Ollama, Unsloth). GGUF files are self-contained — they include the model weights, tokenizer configuration, and metadata in a single file. This makes them easy to deploy: download one file, point llama.cpp at it, and start serving.
 
-### What Is Q4_K_M?
+### What Is Q4_K_XL?
 
-The `Q4_K_M` in the GGUF filename refers to the specific quantization scheme:
+The `Q4_K_XL` in the GGUF filename refers to the specific quantization scheme:
 - **Q4** — 4-bit quantization (each weight stored in 4 bits instead of 16)
 - **K** — uses k-quant method, which groups weights into blocks and stores per-block scaling factors for better accuracy
-- **M** — medium size variant (balances quality vs compression; S = small/more compressed, L = large/less compressed)
+- **L** — large size variant (balances quality vs compression; S = small/more compressed, L = large/less compressed)
 
-Q4_K_M is widely considered the sweet spot for 4-bit quantization — it preserves most of the model's quality while achieving ~3x compression over BF16.
+Q4_K_XL is widely considered the sweet spot for 4-bit quantization — it preserves most of the model's quality while achieving ~3x compression over BF16.
 
 ### Artifact → Runtime → AWS Service
 
