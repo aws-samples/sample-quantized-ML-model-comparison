@@ -23,7 +23,7 @@ resource "aws_cloudwatch_log_group" "sagemaker_full_precision" {
 }
 
 # ---------------------------------------------------------------------------
-# SageMaker Model — Quantized (BYOC llama.cpp with Q4_K_M GGUF)
+# SageMaker Model — Quantized (BYOC llama.cpp with UD-Q4_K_XL GGUF)
 # ---------------------------------------------------------------------------
 
 resource "aws_sagemaker_model" "quantized" {
@@ -38,7 +38,7 @@ resource "aws_sagemaker_model" "quantized" {
 
   tags = {
     Project      = "qwen3-vl-quantized-comparison"
-    ModelVariant = "quantized-q4-k-m"
+    ModelVariant = "quantized-ud-q4-k-xl"
   }
 }
 
@@ -60,7 +60,7 @@ resource "aws_sagemaker_endpoint_configuration" "quantized" {
 
   tags = {
     Project      = "qwen3-vl-quantized-comparison"
-    ModelVariant = "quantized-q4-k-m"
+    ModelVariant = "quantized-ud-q4-k-xl"
   }
 }
 
@@ -74,7 +74,7 @@ resource "aws_sagemaker_endpoint" "quantized" {
 
   tags = {
     Project      = "qwen3-vl-quantized-comparison"
-    ModelVariant = "quantized-q4-k-m"
+    ModelVariant = "quantized-ud-q4-k-xl"
   }
 }
 

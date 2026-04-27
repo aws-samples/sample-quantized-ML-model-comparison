@@ -8,7 +8,7 @@ This Terraform configuration provisions two SageMaker real-time endpoints for co
 
 - An **Amazon ECR repository** and builds/pushes a custom Docker container (BYOC — Bring Your Own Container) running llama.cpp with CUDA support
 - An **IAM execution role** with minimum permissions for SageMaker hosting and ECR access
-- A **quantized model endpoint** (`ml.g5.xlarge`) serving the Q4_K_M GGUF model via llama.cpp
+- A **quantized model endpoint** (`ml.g5.xlarge`) serving the UD-Q4_K_XL GGUF model via llama.cpp
 - A **full-precision endpoint** (`ml.g5.12xlarge`) serving the BF16 model via vLLM on SageMaker LMI
 
 Both endpoints are used by the companion Jupyter notebook (`comparison_notebook.ipynb`) to run side-by-side inference comparisons focused on image understanding tasks.

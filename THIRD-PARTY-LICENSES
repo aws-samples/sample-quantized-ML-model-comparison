@@ -19,7 +19,7 @@ This project includes or depends on the following third-party components:
 3. Unsloth Qwen3-VL-8B-Instruct-GGUF (Quantized Model)
    - Source: https://huggingface.co/unsloth/Qwen3-VL-8B-Instruct-GGUF
    - License: Apache-2.0
-   - Usage: Q4_K_M GGUF and mmproj-F16 vision projector files downloaded at
+   - Usage: UD-Q4_K_XL GGUF and mmproj-F16 vision projector files downloaded at
      Docker build time for quantized inference via llama.cpp.
 
 4. nginx

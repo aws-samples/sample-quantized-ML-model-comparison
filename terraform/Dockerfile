@@ -23,12 +23,12 @@ ENV HF_HUB_ENABLE_HF_TRANSFER=1
 # ── Download model weights at build time ────────────────────────────────────
 RUN mkdir -p /models
 
-# Download the Q4_K_M GGUF file (~5 GB)
+# Download the UD-Q4_K_XL GGUF file (Unsloth Dynamic quantization)
 RUN hf download \
         unsloth/Qwen3-VL-8B-Instruct-GGUF \
-        Qwen3-VL-8B-Instruct-Q4_K_M.gguf \
+        Qwen3-VL-8B-Instruct-UD-Q4_K_XL.gguf \
         --local-dir /models \
-    && ls -lh /models/Qwen3-VL-8B-Instruct-Q4_K_M.gguf
+    && ls -lh /models/Qwen3-VL-8B-Instruct-UD-Q4_K_XL.gguf
 
 # Download the mmproj vision projector file
 RUN hf download \

@@ -6,7 +6,7 @@
 set -e
 
 # ── Configuration ───────────────────────────────────────────────────────────
-MODEL_PATH="/models/Qwen3-VL-8B-Instruct-Q4_K_M.gguf"
+MODEL_PATH="/models/Qwen3-VL-8B-Instruct-UD-Q4_K_XL.gguf"
 MMPROJ_PATH="/models/mmproj-F16.gguf"
 LLAMA_HOST="0.0.0.0"
 LLAMA_PORT="8081"
